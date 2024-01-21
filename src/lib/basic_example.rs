@@ -5,15 +5,16 @@ use crate::lib::exact_cover::{ExactCoverProblem, ExactCoverSolution};
 /**
  * A basic example problem which can be solved with exact cover.
  */
-struct BasicExampleProblem<'a> {
-    items: Vec<&'a str>,
+pub(crate) struct BasicExampleProblem<'a> {
+    required_items: Vec<&'a str>,
+    optional_items: Vec<&'a str>,
     options: Vec<&'a str>,
 }
 
 /**
  * A basic example solution.
  */
-struct BasicExampleSolution {
+pub(crate) struct BasicExampleSolution {
     selected_options: Vec<String>,
 }
 
@@ -23,7 +24,10 @@ struct BasicExampleSolution {
 fn convert_to_exact_cover_problem<'a>(basic_example: &'a BasicExampleProblem<'a>) -> ExactCoverProblem<'a> {
     let mut covered_by: HashMap<&str, Vec<&str>> = HashMap::new();
 
-    for item in &basic_example.items {
+    for item in &basic_example.required_items {
+        covered_by.insert(item, Vec::new());
+    }
+    for item in &basic_example.optional_items {
         covered_by.insert(item, Vec::new());
     }
 
@@ -33,7 +37,7 @@ fn convert_to_exact_cover_problem<'a>(basic_example: &'a BasicExampleProblem<'a>
         }
     }
 
-    return ExactCoverProblem::new(covered_by);
+    return ExactCoverProblem::new(basic_example.required_items.clone(), covered_by);
 }
 
 fn get_items_which_can_be_covered_by_option(option_name: &str) -> Vec<&str> {
@@ -69,7 +73,8 @@ mod tests {
     #[test]
     fn test_zero_items() {
         let basic_example = BasicExampleProblem {
-            items: vec![],
+            required_items: vec![],
+            optional_items: vec![],
             options: vec![],
         };
 
@@ -84,7 +89,8 @@ mod tests {
     #[test]
     fn test_zero_options() {
         let basic_example = BasicExampleProblem {
-            items: vec!["A", "B", "C", "D", "E", "F", "G"],
+            required_items: vec!["A", "B", "C", "D", "E", "F", "G"],
+            optional_items: vec![],
             options: vec![],
         };
 
@@ -94,9 +100,26 @@ mod tests {
     }
 
     #[test]
+    fn test_only_optional_items_and_zero_options() {
+        let basic_example = BasicExampleProblem {
+            required_items: vec![],
+            optional_items: vec!["A", "B", "C", "D", "E", "F", "G"],
+            options: vec![],
+        };
+
+        let solution = solve_basic_example_with_exact_cover(&basic_example);
+
+        assert!(solution.is_some());
+        let selected_options = solution.unwrap().selected_options;
+        let right: Vec<&str> = vec![];
+        assert_eq!(selected_options, right);
+    }
+
+    #[test]
     fn test_one_item() {
         let basic_example = BasicExampleProblem {
-            items: vec!["A"],
+            required_items: vec!["A"],
+            optional_items: vec![],
             options: vec!["A"],
         };
 
@@ -110,7 +133,8 @@ mod tests {
     #[test]
     fn test_choose_all_two_options() {
         let basic_example = BasicExampleProblem {
-            items: vec!["A", "B"],
+            required_items: vec!["A", "B"],
+            optional_items: vec![],
             options: vec!["A", "B"],
         };
 
@@ -124,7 +148,8 @@ mod tests {
     #[test]
     fn test_choose_two_of_three_options_for_three_items() {
         let basic_example = BasicExampleProblem {
-            items: vec!["A", "B", "C"],
+            required_items: vec!["A", "B", "C"],
+            optional_items: vec![],
             options: vec!["AB", "AC", "C"],
         };
 
@@ -138,7 +163,8 @@ mod tests {
     #[test]
     fn test_no_solution_for_three_items() {
         let basic_example = BasicExampleProblem {
-            items: vec!["A", "B", "C"],
+            required_items: vec!["A", "B", "C"],
+            optional_items: vec![],
             options: vec!["AB", "BC", "AC"],
         };
 
@@ -151,7 +177,8 @@ mod tests {
     fn test_basic_example() {
         // Example from https://en.wikipedia.org/wiki/Exact_cover#Detailed_example
         let basic_example = BasicExampleProblem {
-            items: vec!["1", "2", "3", "4", "5", "6", "7"],
+            required_items: vec!["1", "2", "3", "4", "5", "6", "7"],
+            optional_items: vec![],
             options: vec![
                 "147",
                 "14",
@@ -172,7 +199,8 @@ mod tests {
     #[test]
     fn test_basic_example_no_solution() {
         let basic_example = BasicExampleProblem {
-            items: vec!["1", "2", "3", "4", "5", "6", "7"],
+            required_items: vec!["1", "2", "3", "4", "5", "6", "7"],
+            optional_items: vec![],
             options: vec![
                 "147",
                 "14",
@@ -191,7 +219,30 @@ mod tests {
     #[test]
     fn test_knuth_basic_example() {
         let basic_example = BasicExampleProblem {
-            items: vec!["A", "B", "C", "D", "E", "F", "G"],
+            required_items: vec!["A", "B", "C", "D", "E", "F", "G"],
+            optional_items: vec![],
+            options: vec![
+                "CEF",
+                "ADG",
+                "BCF",
+                "AD",
+                "BG",
+                "DEG",
+            ],
+        };
+
+        let solution = solve_basic_example_with_exact_cover(&basic_example);
+
+        assert!(solution.is_some());
+        let selected_options = solution.unwrap().selected_options;
+        assert_eq_ignore_order(&selected_options, &vec!["CEF".to_string(), "AD".to_string(), "BG".to_string()]);
+    }
+
+    #[test]
+    fn test_knuth_basic_example_with_optional_h() {
+        let basic_example = BasicExampleProblem {
+            required_items: vec!["A", "B", "C", "D", "E", "F", "G"],
+            optional_items: vec!["H"],
             options: vec![
                 "CEF",
                 "ADG",
