@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
+use log::info;
 use priority_queue::PriorityQueue;
 
 /**
@@ -34,7 +35,7 @@ impl<'a> ExactCoverProblem<'a> {
         required_items: Vec<&'a str>,
         covered_by: HashMap<&'a str, Vec<&'a str>>) -> ExactCoverProblem<'a>
     {
-        println!("covered_by: {:?}", covered_by);
+        info!("Covered by: {:?}", covered_by);
         let mut covers: HashMap<&str, Vec<&str>> = HashMap::new();
         for (item_name, option_names) in covered_by.clone() {
             for option_name in option_names.iter() {
@@ -67,15 +68,15 @@ impl<'a> ExactCoverProblem<'a> {
      * Solve the exact cover problem.
      */
     pub fn solve(&'a self) -> Option<ExactCoverSolution<'a>> {
-        println!("Items: {:?}", self.items_queue);
-        println!("Options: {:?}", self.available_options);
+        info!("Items queue: {:?}", self.get_items_queue());
+        info!("Available options: {:?}", self.get_available_options());
         let item_name_opt = self.select_new_item();
         return match item_name_opt {
             Some(item_name) => {
-                println!("Selecting item {}", item_name);
+                info!("Selecting item {}", item_name);
 
                 if self.available_options.borrow().get(item_name).unwrap().borrow().len() == 0 {
-                    println!("Contradiction: item {} has no options left", item_name);
+                    info!("Contradiction: item {} has no options left", item_name);
                     // Contradiction => return no solution found for selected option
                     return None;
                 }
@@ -84,33 +85,32 @@ impl<'a> ExactCoverProblem<'a> {
                 //   while iterating over it
                 let available_options = self.available_options.borrow().get(item_name).unwrap().borrow().clone();
                 for option_name in available_options.iter() {
-                    println!("Selecting option {}", option_name);
+                    info!("Selecting option {}", option_name);
                     self.select_option(option_name);
 
                     match self.solve() {
                         Some(solution) => {
                             // Solution found => return it
-                            println!("Solution found: {:?}", solution);
                             return Some(solution); // TODO return multiple solutions if desired
                         }
                         None => {
-                            println!("No solution found for option {}", option_name);
+                            info!("No solution found for option {}", option_name);
                             // No solution => backtrack and try next option
                         }
                     }
 
-                    println!("Unselecting option {}", option_name);
+                    info!("Unselecting option {}", option_name);
                     self.unselect_option(option_name) // backtrack
                 }
 
                 // There is no valid option that covers item => return no solution found for selected option
-                println!("No solution found for item {}", item_name);
+                info!("No solution found for item {}", item_name);
                 None
             }
 
             None => {
                 // No more item left => solution found
-                println!("No more items left. Solution found: {:?}", self.selected_options);
+                info!("No more items left. Solution found: {:?}", self.selected_options.borrow());
                 Some(ExactCoverSolution {
                     selected_options: self.selected_options.clone().into_inner().clone(),
                 })
@@ -135,13 +135,13 @@ impl<'a> ExactCoverProblem<'a> {
         self.covers.get(option_name).unwrap().iter()
             .for_each(|item_name| {
                 // ... remove it from the items queue ...
-                println!("Removing item {}", item_name);
+                info!("Removing item {}", item_name);
                 self.remove_item(item_name);
 
                 // ... and make all its options unavailable because only one option can be selected per item
                 self.covered_by.get(item_name).unwrap().iter()
                     .for_each(|other_option_name| {
-                        println!("Removing option {}", other_option_name);
+                        info!("Removing option {}", other_option_name);
                         self.remove_option(other_option_name);
                     });
             });
@@ -216,5 +216,23 @@ impl<'a> ExactCoverProblem<'a> {
      */
     fn update_priority(&'a self, item_name: &'a str) {
         self.items_queue.borrow_mut().change_priority(item_name, -(self.available_options.borrow().get(item_name).unwrap().borrow().len() as i32));
+    }
+
+    /**
+     * Get the items queue.
+     */
+    fn get_items_queue(&self) -> Vec<&str> {
+        return self.items_queue.borrow().clone().into_sorted_vec().iter().map(|item_name| *item_name).collect();
+    }
+
+    /**
+     * Get the available options for each item.
+     */
+    fn get_available_options(&self) -> HashMap<&str, HashSet<&str>> {
+        let mut available_options: HashMap<&str, HashSet<&str>> = HashMap::new();
+        for (item_name, options) in self.available_options.borrow().iter() {
+            available_options.insert(item_name, options.borrow().clone());
+        }
+        return available_options;
     }
 }
