@@ -47,11 +47,14 @@ impl<'a> ExactCoverProblem<'a> {
         }
 
         let mut available_options: HashMap<&str, RefCell<HashSet<&str>>> = HashMap::new();
+        for (item_name, option_names) in covered_by.clone() {
+            available_options.insert(item_name, RefCell::new(HashSet::from_iter(option_names.clone())));
+        }
+
         let mut items_queue = PriorityQueue::new();
         for item_name in required_items.iter() {
             let option_names = covered_by.get(item_name).unwrap();
-            available_options.insert(item_name, RefCell::new(HashSet::from_iter(option_names.clone())));
-            items_queue.push(item_name.clone(), -(option_names.len() as i32));
+            items_queue.push(*item_name, -(option_names.len() as i32));
         }
         let selected_options = Vec::new();
 
