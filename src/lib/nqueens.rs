@@ -32,7 +32,7 @@ fn convert_to_exact_cover_problem<'a>(nqueens_problem: &NQueensProblem) -> Exact
         required_items.push(Box::leak(col_item_name.clone().into_boxed_str()));
         covered_by.insert(Box::leak(col_item_name.into_boxed_str()), Vec::new());
     }
-    // One optional item for every diagonal in both directions (2n - 1 + 2n - 1)
+    // One optional item for every diagonal in both directions 2 * (2n - 1)
     for diag1 in (-(n as i16) + 1)..(n as i16) {
         let diag1_item_name = diag1_to_name(diag1);
         covered_by.insert(Box::leak(diag1_item_name.into_boxed_str()), Vec::new());
@@ -49,7 +49,7 @@ fn convert_to_exact_cover_problem<'a>(nqueens_problem: &NQueensProblem) -> Exact
             let row_item_name = row_to_name(row);
             let col_item_name = col_to_name(col);
             let diag1_item_name = diag1_to_name(col_row_to_diag1(col, row));
-            let diag2_item_name = diag2_to_name(col_row_to_diag2(col, row));
+            let diag2_item_name = diag2_to_name(col_row_to_diag2(col, row, n));
             covered_by.get_mut(Box::leak(row_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
             covered_by.get_mut(Box::leak(col_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
             covered_by.get_mut(Box::leak(diag1_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
@@ -76,15 +76,15 @@ fn name_to_row(name: String) -> u8 {
 }
 
 fn col_row_to_diag1(col: u8, row: u8) -> i16 {
-    return (row as i16) - (col as i16);
+    return (col as i16) - (row as i16);
 }
 
 fn diag1_to_name(diag1: i16) -> String {
     return format!("/{}", diag1);
 }
 
-fn col_row_to_diag2(col: u8, row: u8) -> i16 {
-    return (col as i16) - (row as i16);
+fn col_row_to_diag2(col: u8, row: u8, n: u8) -> i16 {
+    return (col as i16) + (row as i16) - (n as i16 - 1);
 }
 
 fn diag2_to_name(diag2: i16) -> String {
@@ -149,6 +149,7 @@ pub(crate) fn solve_nqueens_problem_with_exact_cover<'a>(nqueens_problem: &NQuee
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn test_fmt() {
@@ -203,7 +204,7 @@ fn assert_valid_nqueens_solution(nqueens_solution: NQueensSolution) {
                 row_counts[row] += 1;
                 col_counts[col] += 1;
                 let diag1 = col_row_to_diag1(col as u8, row as u8);
-                let diag2 = col_row_to_diag2(col as u8, row as u8);
+                let diag2 = col_row_to_diag2(col as u8, row as u8, n as u8);
                 diag1_counts[(diag1 + (n as i16 - 1)) as usize] += 1;
                 diag2_counts[(diag2 + (n as i16 - 1)) as usize] += 1;
             }
