@@ -21,23 +21,25 @@ pub(crate) struct BasicExampleSolution {
 /**
  * Convert a basic example problem to an exact cover problem.
  */
-fn convert_to_exact_cover_problem<'a>(basic_example: &'a BasicExampleProblem<'a>) -> ExactCoverProblem<'a> {
-    let mut covered_by: HashMap<&str, Vec<&str>> = HashMap::new();
+fn convert_to_exact_cover_problem<'a>(basic_example: &'a BasicExampleProblem<'a>) -> ExactCoverProblem {
+    let mut covered_by: HashMap<String, Vec<String>> = HashMap::new();
 
+    let mut required_items: Vec<String>= Vec::new();
     for item in &basic_example.required_items {
-        covered_by.insert(item, Vec::new());
+        covered_by.insert(item.to_string(), Vec::new());
+        required_items.push(item.to_string());
     }
     for item in &basic_example.optional_items {
-        covered_by.insert(item, Vec::new());
+        covered_by.insert(item.to_string(), Vec::new());
     }
 
     for option_name in &basic_example.options {
         for item_name in get_items_which_can_be_covered_by_option(option_name) {
-            covered_by.get_mut(item_name).unwrap().push(option_name);
+            covered_by.get_mut(item_name).unwrap().push(option_name.to_string());
         }
     }
 
-    return ExactCoverProblem::new(basic_example.required_items.clone(), vec![], covered_by);
+    return ExactCoverProblem::new(required_items, vec![], covered_by);
 }
 
 fn get_items_which_can_be_covered_by_option(option_name: &str) -> Vec<&str> {

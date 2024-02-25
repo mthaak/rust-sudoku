@@ -16,32 +16,31 @@ impl NQueensProblem {
     }
 }
 
-fn convert_to_exact_cover_problem<'a>(nqueens_problem: &NQueensProblem) -> ExactCoverProblem<'a> {
-    //TODO remove Box::leak. Should I just use String instead of &str?
+fn convert_to_exact_cover_problem(nqueens_problem: &NQueensProblem) -> ExactCoverProblem {
     let n = nqueens_problem.n as u8;
 
-    let mut required_items: Vec<&str> = Vec::new();
-    let mut covered_by: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut required_items: Vec<String> = Vec::new();
+    let mut covered_by: HashMap<String, Vec<String>> = HashMap::new();
     // One item for every row (n)
     for row in 0..n {
         let row_item_name = row_to_name(row);
-        required_items.push(Box::leak(row_item_name.clone().into_boxed_str()));
-        covered_by.insert(Box::leak(row_item_name.into_boxed_str()), Vec::new());
+        required_items.push(row_item_name.clone());
+        covered_by.insert(row_item_name, Vec::new());
     }
     // One item for every column (n)
     for col in 0..n {
         let col_item_name = col_to_name(col);
-        required_items.push(Box::leak(col_item_name.clone().into_boxed_str()));
-        covered_by.insert(Box::leak(col_item_name.into_boxed_str()), Vec::new());
+        required_items.push(col_item_name.clone());
+        covered_by.insert(col_item_name, Vec::new());
     }
     // One optional item for every diagonal in both directions 2 * (2n - 1)
     for diag1 in (-(n as i16) + 1)..(n as i16) {
         let diag1_item_name = diag1_to_name(diag1);
-        covered_by.insert(Box::leak(diag1_item_name.into_boxed_str()), Vec::new());
+        covered_by.insert(diag1_item_name, Vec::new());
     }
     for diag2 in (-(n as i16) + 1)..(n as i16) {
         let diag2_item_name = diag2_to_name(diag2);
-        covered_by.insert(Box::leak(diag2_item_name.into_boxed_str()), Vec::new());
+        covered_by.insert(diag2_item_name, Vec::new());
     }
 
     // One option for every possible position (64)
@@ -52,10 +51,10 @@ fn convert_to_exact_cover_problem<'a>(nqueens_problem: &NQueensProblem) -> Exact
             let col_item_name = col_to_name(col);
             let diag1_item_name = diag1_to_name(col_row_to_diag1(col, row));
             let diag2_item_name = diag2_to_name(col_row_to_diag2(col, row, n));
-            covered_by.get_mut(Box::leak(row_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
-            covered_by.get_mut(Box::leak(col_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
-            covered_by.get_mut(Box::leak(diag1_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
-            covered_by.get_mut(Box::leak(diag2_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
+            covered_by.get_mut(&row_item_name).unwrap().push(option_name.clone());
+            covered_by.get_mut(&col_item_name).unwrap().push(option_name.clone());
+            covered_by.get_mut(&diag1_item_name).unwrap().push(option_name.clone());
+            covered_by.get_mut(&diag2_item_name).unwrap().push(option_name.clone());
         }
     }
     return ExactCoverProblem::new(required_items, vec![], covered_by);
@@ -139,7 +138,7 @@ fn convert_to_nqueens_solution(solution: ExactCoverSolution) -> NQueensSolution 
 /**
  * Solve n-queens problem with exact cover.
  */
-pub(crate) fn solve_nqueens_problem_with_exact_cover<'a>(nqueens_problem: &NQueensProblem) -> Option<NQueensSolution> {
+pub(crate) fn solve_nqueens_problem_with_exact_cover(nqueens_problem: &NQueensProblem) -> Option<NQueensSolution> {
     let exact_cover_problem = convert_to_exact_cover_problem(nqueens_problem);
 
     let solution = exact_cover_problem.solve();

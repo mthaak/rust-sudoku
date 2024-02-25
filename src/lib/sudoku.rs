@@ -99,48 +99,48 @@ impl Display for Board {
 }
 
 pub fn convert_to_exact_cover_problem(board: &Board) -> ExactCoverProblem {
-    let mut required_items: Vec<&str> = Vec::new();
+    let mut required_items: Vec<String> = Vec::new();
     // One item for each cell (81) because each cell must have a digit
     for i in 0..9 {
         for j in 0..9 {
-            required_items.push(Box::leak(cell_item_to_name(i as u8, j as u8).into_boxed_str()));
+            required_items.push(cell_item_to_name(i as u8, j as u8));
         }
     }
     // One item for every digit in every row (9 * 9) because each digit must appear in each row
     for i in 0..9 {
         for d in 1..10 {
-            required_items.push(Box::leak(row_item_to_name(i as u8, d as u8).into_boxed_str()));
+            required_items.push(row_item_to_name(i as u8, d as u8));
         }
     }
     // One item for every digit in every column (9 * 9) because each digit must appear in each column
     for i in 0..9 {
         for d in 1..10 {
-            required_items.push(Box::leak(col_item_to_name(i as u8, d as u8).into_boxed_str()));
+            required_items.push(col_item_to_name(i as u8, d as u8));
         }
     }
     // One item for every digit in every block (9 * 9) because each digit must appear in each block
     for i in 0..9 {
         for d in 1..10 {
-            required_items.push(Box::leak(block_item_to_name(i as u8, d as u8).into_boxed_str()));
+            required_items.push(block_item_to_name(i as u8, d as u8));
         }
     }
     // One item for initial state (1) to ensure that the initial state is preserved
     // required_items.push(initial_state_item_name);
 
-    let mut covered_by: HashMap<&str, Vec<&str>> = HashMap::new();
-    let mut required_options: Vec<&str> = Vec::new();
+    let mut covered_by: HashMap<String, Vec<String>> = HashMap::new();
+    let mut required_options: Vec<String> = Vec::new();
     // One option for every possible digit in every cell (81 * 9) because each cell must have a digit
     for i in 0..9 {
         for j in 0..9 {
             for d in 1..10 {
                 let option_name = cell_option_to_name(i as u8, j as u8, d);
-                covered_by.entry(Box::leak(cell_item_to_name(i as u8, j as u8).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
-                covered_by.entry(Box::leak(row_item_to_name(i as u8, d).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
-                covered_by.entry(Box::leak(col_item_to_name(j as u8, d).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
-                covered_by.entry(Box::leak(block_item_to_name(cell_to_block(i as u8, j as u8), d).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
+                covered_by.entry(cell_item_to_name(i as u8, j as u8)).or_insert(Vec::new()).push(option_name.clone());
+                covered_by.entry(row_item_to_name(i as u8, d)).or_insert(Vec::new()).push(option_name.clone());
+                covered_by.entry(col_item_to_name(j as u8, d)).or_insert(Vec::new()).push(option_name.clone());
+                covered_by.entry(block_item_to_name(cell_to_block(i as u8, j as u8), d)).or_insert(Vec::new()).push(option_name.clone());
 
                 if board.0[i][j] == d {
-                    required_options.push(Box::leak(option_name.into_boxed_str()));
+                    required_options.push(option_name);
                 }
             }
         }
@@ -179,7 +179,7 @@ fn cell_option_to_name(row: u8, col: u8, digit: u8) -> String {
 
 const initial_state_option_name: &str = "init";
 
-fn name_to_cell_option(name: &str) -> (u8, u8, u8) {
+fn name_to_cell_option(name: String) -> (u8, u8, u8) {
     let mut chars = name.chars();
     let row = chars.nth(1).unwrap().to_digit(10).unwrap() as u8;
     let col = chars.nth(1).unwrap().to_digit(10).unwrap() as u8;
