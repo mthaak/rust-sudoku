@@ -58,7 +58,7 @@ fn convert_to_exact_cover_problem<'a>(nqueens_problem: &NQueensProblem) -> Exact
             covered_by.get_mut(Box::leak(diag2_item_name.into_boxed_str())).unwrap().push(Box::leak(option_name.clone().into_boxed_str()));
         }
     }
-    return ExactCoverProblem::new(required_items, covered_by);
+    return ExactCoverProblem::new(required_items, vec![], covered_by);
 }
 
 fn col_to_name(col: u8) -> String {
@@ -162,7 +162,7 @@ mod tests {
     use super::*;
     use rstest::rstest;
 
-    fn enable_logger() {
+    fn enable_logging() {
         std::env::set_var("RUST_LOG", "info");
         let _ = env_logger::builder().is_test(true).try_init();
     }

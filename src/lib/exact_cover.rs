@@ -14,6 +14,8 @@ pub struct ExactCoverProblem<'a> {
     covers: HashMap<&'a str, Vec<&'a str>>,
     /// The items that must be covered
     required_items: HashSet<&'a str>,
+    /// The options that must be selected as part of the solution
+    required_options: HashSet<&'a str>,
 
     // TODO these should probably be passed down to the recursive _solve method instead of being mutating fields
     /// Map from item name to the available options (i.e. those that haven't been removed)
@@ -41,6 +43,7 @@ impl<'a> ExactCoverProblem<'a> {
      */
     pub fn new(
         required_items: Vec<&'a str>,
+        required_options: Vec<&'a str>,
         covered_by: HashMap<&'a str, Vec<&'a str>>) -> ExactCoverProblem<'a>
     {
         info!("Covered by: {:?}", covered_by);
@@ -67,11 +70,13 @@ impl<'a> ExactCoverProblem<'a> {
         let selected_options = Vec::new();
 
         let required_items = HashSet::from_iter(required_items.iter().cloned());
+        let required_options = HashSet::from_iter(required_options.iter().cloned());
 
         ExactCoverProblem {
             covered_by,
             covers,
             required_items,
+            required_options,
             available_options: RefCell::new(available_options),
             items_queue: RefCell::new(items_queue),
             selected_options: RefCell::new(selected_options),
@@ -82,8 +87,15 @@ impl<'a> ExactCoverProblem<'a> {
      * Solve the exact cover problem.
      */
     pub fn solve(&'a self) -> Option<ExactCoverSolution<'a>> {
+        self.select_required_options();
         let result = self._solve_until(1);
         return result.last_solution;
+    }
+
+    fn select_required_options(&'a self) {
+        for option_name in self.required_options.iter() {
+            self.select_option(option_name);
+        }
     }
 
     /**
@@ -163,6 +175,7 @@ impl<'a> ExactCoverProblem<'a> {
      * Count all solutions to the exact cover problem.
      */
     pub fn count_all_solutions(&'a self) -> u64 {
+        self.select_required_options();
         let result = self._solve_until(i32::MAX);
         return result.num_solutions;
     }

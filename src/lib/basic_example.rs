@@ -37,7 +37,7 @@ fn convert_to_exact_cover_problem<'a>(basic_example: &'a BasicExampleProblem<'a>
         }
     }
 
-    return ExactCoverProblem::new(basic_example.required_items.clone(), covered_by);
+    return ExactCoverProblem::new(basic_example.required_items.clone(), vec![], covered_by);
 }
 
 fn get_items_which_can_be_covered_by_option(option_name: &str) -> Vec<&str> {
@@ -70,7 +70,7 @@ mod tests {
 
     use super::*;
 
-    fn enable_logger() {
+    fn enable_logging() {
         std::env::set_var("RUST_LOG", "info");
         let _ = env_logger::builder().is_test(true).try_init();
     }

@@ -1,9 +1,12 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-#[derive(Debug, PartialEq)]
+use crate::lib::exact_cover::{ExactCoverProblem, ExactCoverSolution};
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Board(Vec<Vec<u8>>);
 
 // BoardReadError is a custom error type for errors that occur when reading a board from a file.
@@ -95,6 +98,118 @@ impl Display for Board {
     }
 }
 
+pub fn convert_to_exact_cover_problem(board: &Board) -> ExactCoverProblem {
+    let mut required_items: Vec<&str> = Vec::new();
+    // One item for each cell (81) because each cell must have a digit
+    for i in 0..9 {
+        for j in 0..9 {
+            required_items.push(Box::leak(cell_item_to_name(i as u8, j as u8).into_boxed_str()));
+        }
+    }
+    // One item for every digit in every row (9 * 9) because each digit must appear in each row
+    for i in 0..9 {
+        for d in 1..10 {
+            required_items.push(Box::leak(row_item_to_name(i as u8, d as u8).into_boxed_str()));
+        }
+    }
+    // One item for every digit in every column (9 * 9) because each digit must appear in each column
+    for i in 0..9 {
+        for d in 1..10 {
+            required_items.push(Box::leak(col_item_to_name(i as u8, d as u8).into_boxed_str()));
+        }
+    }
+    // One item for every digit in every block (9 * 9) because each digit must appear in each block
+    for i in 0..9 {
+        for d in 1..10 {
+            required_items.push(Box::leak(block_item_to_name(i as u8, d as u8).into_boxed_str()));
+        }
+    }
+    // One item for initial state (1) to ensure that the initial state is preserved
+    // required_items.push(initial_state_item_name);
+
+    let mut covered_by: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut required_options: Vec<&str> = Vec::new();
+    // One option for every possible digit in every cell (81 * 9) because each cell must have a digit
+    for i in 0..9 {
+        for j in 0..9 {
+            for d in 1..10 {
+                let option_name = cell_option_to_name(i as u8, j as u8, d);
+                covered_by.entry(Box::leak(cell_item_to_name(i as u8, j as u8).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
+                covered_by.entry(Box::leak(row_item_to_name(i as u8, d).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
+                covered_by.entry(Box::leak(col_item_to_name(j as u8, d).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
+                covered_by.entry(Box::leak(block_item_to_name(cell_to_block(i as u8, j as u8), d).into_boxed_str())).or_insert(Vec::new()).push(Box::leak(option_name.clone().into_boxed_str()));
+
+                if board.0[i][j] == d {
+                    required_options.push(Box::leak(option_name.into_boxed_str()));
+                }
+            }
+        }
+    }
+    // One option for the initial state (1) to ensure that the initial state is preserved
+    // covered_by.entry(initial_state_item_name).or_insert(Vec::new()).push(initial_state_option_name);
+
+    return ExactCoverProblem::new(required_items.clone(), required_options, covered_by);
+}
+
+fn cell_item_to_name(row: u8, col: u8) -> String {
+    return format!("r{}c{}", row, col);
+}
+
+fn row_item_to_name(row: u8, digit: u8) -> String {
+    return format!("r{}d{}", row, digit);
+}
+
+fn col_item_to_name(col: u8, digit: u8) -> String {
+    return format!("c{}d{}", col, digit);
+}
+
+fn cell_to_block(row: u8, col: u8) -> u8 {
+    return (row / 3 * 3 + col / 3) as u8;
+}
+
+fn block_item_to_name(block: u8, digit: u8) -> String {
+    return format!("b{}d{}", block, digit);
+}
+
+const initial_state_item_name: &str = "init";
+
+fn cell_option_to_name(row: u8, col: u8, digit: u8) -> String {
+    return format!("r{}c{}d{}", row, col, digit);
+}
+
+const initial_state_option_name: &str = "init";
+
+fn name_to_cell_option(name: &str) -> (u8, u8, u8) {
+    let mut chars = name.chars();
+    let row = chars.nth(1).unwrap().to_digit(10).unwrap() as u8;
+    let col = chars.nth(1).unwrap().to_digit(10).unwrap() as u8;
+    let digit = chars.nth(1).unwrap().to_digit(10).unwrap() as u8;
+    return (row, col, digit);
+}
+
+pub fn convert_to_sudoku_solution(solution: ExactCoverSolution) -> Board {
+    let mut board = vec![vec![0; 9]; 9];
+    for option in solution.selected_options {
+        if option == initial_state_option_name {
+            continue;
+        }
+        let (row, col, digit) = name_to_cell_option(option);
+        board[row as usize][col as usize] = digit;
+    }
+    return Board(board);
+}
+
+/**
+ * Solve Sudoku with exact cover.
+ */
+pub(crate) fn solve_sudoku_with_exact_cover<'a>(board: &Board) -> Option<Board> {
+    let exact_cover_problem = convert_to_exact_cover_problem(board);
+
+    let solution = exact_cover_problem.solve();
+
+    solution.map(convert_to_sudoku_solution)
+}
+
 fn get_board1() -> Board {
     return Board(vec![
         vec![5, 3, 0, 0, 7, 0, 0, 0, 0],
@@ -109,9 +224,28 @@ fn get_board1() -> Board {
     ]);
 }
 
+fn get_board1_solved() -> Board {
+    return Board(vec![
+        vec![5, 3, 4, 6, 7, 8, 9, 1, 2],
+        vec![6, 7, 2, 1, 9, 5, 3, 4, 8],
+        vec![1, 9, 8, 3, 4, 2, 5, 6, 7],
+        vec![8, 5, 9, 7, 6, 1, 4, 2, 3],
+        vec![4, 2, 6, 8, 5, 3, 7, 9, 1],
+        vec![7, 1, 3, 9, 2, 4, 8, 5, 6],
+        vec![9, 6, 1, 5, 3, 7, 2, 8, 4],
+        vec![2, 8, 7, 4, 1, 9, 6, 3, 5],
+        vec![3, 4, 5, 2, 8, 6, 1, 7, 9],
+    ]);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn enable_logging() {
+        std::env::set_var("RUST_LOG", "info");
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
 
     #[test]
     fn test_read_from_file() {
@@ -237,6 +371,55 @@ mod tests {
 ... .8. .79
 ".to_string();
         assert_eq!(fmt, expected_fmt)
+    }
+
+    #[test]
+    fn test_solve_sudoku_with_exact_cover() {
+        let board = get_board1();
+
+        let solution = solve_sudoku_with_exact_cover(&board);
+
+        assert!(solution.is_some());
+        let expected_solution = get_board1_solved();
+        assert_eq!(solution.clone().unwrap(), expected_solution);
+        assert_valid_sudoku_solution(solution.clone().unwrap());
+    }
+}
+
+fn assert_valid_sudoku_solution(board: Board) {
+    // Check rows
+    for i in 0..9 {
+        let mut digits = vec![false; 9];
+        for j in 0..9 {
+            let digit = board.0[i][j];
+            assert_ne!(digit, 0, "Row {} has a cell with no digit", i);
+            assert!(!digits[(digit - 1) as usize], "Row {} has a duplicate digit {}", i, digit);
+            digits[(digit - 1) as usize] = true;
+        }
+    }
+
+    // Check columns
+    for j in 0..9 {
+        let mut digits = vec![false; 9];
+        for i in 0..9 {
+            let digit = board.0[i][j];
+            assert_ne!(digit, 0, "Column {} has a cell with no digit", j);
+            assert!(!digits[(digit - 1) as usize], "Column {} has a duplicate digit {}", j, digit);
+            digits[(digit - 1) as usize] = true;
+        }
+    }
+
+    // Check blocks
+    for block in 0..9 {
+        let mut digits = vec![false; 9];
+        for i in (block / 3 * 3)..(block / 3 * 3 + 3) {
+            for j in (block % 3 * 3)..(block % 3 * 3 + 3) {
+                let digit = board.0[i][j];
+                assert_ne!(digit, 0, "Block {} has a cell with no digit", block);
+                assert!(!digits[(digit - 1) as usize], "Block {} has a duplicate digit {}", block, digit);
+                digits[(digit - 1) as usize] = true;
+            }
+        }
     }
 }
 
