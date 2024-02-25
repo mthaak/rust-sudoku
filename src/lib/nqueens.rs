@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
+use rstest::rstest;
+
 use crate::lib::exact_cover::{ExactCoverProblem, ExactCoverSolution};
 
 pub(crate) struct NQueensProblem {
@@ -145,11 +147,25 @@ pub(crate) fn solve_nqueens_problem_with_exact_cover<'a>(nqueens_problem: &NQuee
     solution.map(convert_to_nqueens_solution)
 }
 
+/**
+ * Count all solutions to n-queens problem with exact cover.
+ */
+pub(crate) fn count_all_nqueens_solutions_with_exact_cover(nqueens_problem: &NQueensProblem) -> u64 {
+    let exact_cover_problem = convert_to_exact_cover_problem(nqueens_problem);
+
+    exact_cover_problem.count_all_solutions()
+}
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use rstest::rstest;
+
+    fn enable_logger() {
+        std::env::set_var("RUST_LOG", "info");
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
 
     #[test]
     fn test_fmt() {
@@ -188,6 +204,25 @@ Q.......
         assert!(solution.is_some());
         let solution = solution.unwrap();
         assert_valid_nqueens_solution(solution);
+    }
+
+    #[rstest]
+    #[case(1, 1)]
+    #[case(2, 0)]
+    #[case(3, 0)]
+    #[case(4, 2)]
+    #[case(5, 10)]
+    #[case(6, 4)]
+    #[case(7, 40)]
+    #[case(8, 92)]
+    #[case(9,352)]
+    #[case(10, 724)]
+    fn test_nqueens_problem_count_all(#[case] input: u16, #[case] expected: u64) {
+        let nqueens_problem = NQueensProblem::new(input);
+
+        let count = count_all_nqueens_solutions_with_exact_cover(&nqueens_problem);
+
+        assert_eq!(count, expected);
     }
 }
 

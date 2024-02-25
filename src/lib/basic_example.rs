@@ -70,14 +70,9 @@ mod tests {
 
     use super::*;
 
-    fn init_logger() {
+    fn enable_logger() {
         std::env::set_var("RUST_LOG", "info");
         let _ = env_logger::builder().is_test(true).try_init();
-    }
-
-    #[ctor::ctor]
-    fn before_all() {
-        init_logger()
     }
 
     #[test]
