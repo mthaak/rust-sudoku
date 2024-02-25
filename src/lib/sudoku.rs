@@ -240,6 +240,7 @@ fn get_board1_solved() -> Board {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
     use super::*;
 
     fn enable_logging() {
@@ -383,6 +384,22 @@ mod tests {
         let expected_solution = get_board1_solved();
         assert_eq!(solution.clone().unwrap(), expected_solution);
         assert_valid_sudoku_solution(solution.clone().unwrap());
+    }
+
+    #[rstest]
+    #[case("sudoku_easy.txt")]
+    #[case("sudoku_medium.txt")]
+    #[case("sudoku_hard.txt")]
+    #[case("sudoku_hardest.txt")]
+    #[case("sudoku_evil.txt")]
+    fn test_solve_sudoku_different_difficulties(#[case] filename: &str) {
+        let board = Board::read_from_file(&format!("data/{}", filename)).unwrap();
+
+        let solution = solve_sudoku_with_exact_cover(&board);
+
+        assert!(solution.is_some());
+        let solution = solution.unwrap();
+        assert_valid_sudoku_solution(solution);
     }
 }
 
