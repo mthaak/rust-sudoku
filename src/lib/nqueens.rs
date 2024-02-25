@@ -158,8 +158,9 @@ pub(crate) fn count_all_nqueens_solutions_with_exact_cover(nqueens_problem: &NQu
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rstest::rstest;
+
+    use super::*;
 
     fn enable_logging() {
         std::env::set_var("RUST_LOG", "info");
@@ -214,7 +215,7 @@ Q.......
     #[case(6, 4)]
     #[case(7, 40)]
     #[case(8, 92)]
-    #[case(9,352)]
+    #[case(9, 352)]
     #[case(10, 724)]
     fn test_nqueens_problem_count_all(#[case] input: u16, #[case] expected: u64) {
         let nqueens_problem = NQueensProblem::new(input);

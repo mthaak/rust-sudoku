@@ -171,13 +171,13 @@ fn block_item_to_name(block: u8, digit: u8) -> String {
     return format!("b{}d{}", block, digit);
 }
 
-const initial_state_item_name: &str = "init";
+const INITIAL_STATE_ITEM_NAME: &str = "init";
 
 fn cell_option_to_name(row: u8, col: u8, digit: u8) -> String {
     return format!("r{}c{}d{}", row, col, digit);
 }
 
-const initial_state_option_name: &str = "init";
+const INITIAL_STATE_OPTION_NAME: &str = "init";
 
 fn name_to_cell_option(name: String) -> (u8, u8, u8) {
     let mut chars = name.chars();
@@ -190,7 +190,7 @@ fn name_to_cell_option(name: String) -> (u8, u8, u8) {
 pub fn convert_to_sudoku_solution(solution: ExactCoverSolution) -> Board {
     let mut board = vec![vec![0; 9]; 9];
     for option in solution.selected_options {
-        if option == initial_state_option_name {
+        if option == INITIAL_STATE_OPTION_NAME {
             continue;
         }
         let (row, col, digit) = name_to_cell_option(option);
@@ -241,6 +241,7 @@ fn get_board1_solved() -> Board {
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
+
     use super::*;
 
     fn enable_logging() {

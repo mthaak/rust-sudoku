@@ -24,7 +24,7 @@ pub(crate) struct BasicExampleSolution {
 fn convert_to_exact_cover_problem<'a>(basic_example: &'a BasicExampleProblem<'a>) -> ExactCoverProblem {
     let mut covered_by: HashMap<String, Vec<String>> = HashMap::new();
 
-    let mut required_items: Vec<String>= Vec::new();
+    let mut required_items: Vec<String> = Vec::new();
     for item in &basic_example.required_items {
         covered_by.insert(item.to_string(), Vec::new());
         required_items.push(item.to_string());

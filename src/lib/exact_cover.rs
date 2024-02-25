@@ -7,7 +7,7 @@ use priority_queue::PriorityQueue;
 /**
  * An exact cover problem. See https://en.wikipedia.org/wiki/Exact_cover.
  */
-pub struct ExactCoverProblem{
+pub struct ExactCoverProblem {
     /// Map from item name to option names
     covered_by: HashMap<String, Vec<String>>,
     /// Map from option name to item names
@@ -27,12 +27,12 @@ pub struct ExactCoverProblem{
 }
 
 #[derive(Debug)]
-pub struct ExactCoverSolution{
+pub struct ExactCoverSolution {
     /// The selected options
     pub(crate) selected_options: Vec<String>,
 }
 
-struct ExactCoverResult{
+struct ExactCoverResult {
     last_solution: Option<ExactCoverSolution>,
     num_solutions: u64,
 }
@@ -86,13 +86,13 @@ impl ExactCoverProblem {
     /**
      * Solve the exact cover problem.
      */
-    pub fn solve(& self) -> Option<ExactCoverSolution> {
+    pub fn solve(&self) -> Option<ExactCoverSolution> {
         self.select_required_options();
         let result = self._solve_until(1);
         return result.last_solution;
     }
 
-    fn select_required_options(& self) {
+    fn select_required_options(&self) {
         for option_name in self.required_options.iter() {
             self.select_option(option_name.clone());
         }
@@ -101,7 +101,7 @@ impl ExactCoverProblem {
     /**
      * Solve the exact cover problem until the given number of solutions are found.
      */
-    fn _solve_until(& self, remaining_solutions: i32) -> ExactCoverResult {
+    fn _solve_until(&self, remaining_solutions: i32) -> ExactCoverResult {
         if remaining_solutions <= 0 {
             return ExactCoverResult {
                 last_solution: None,
@@ -174,7 +174,7 @@ impl ExactCoverProblem {
     /**
      * Count all solutions to the exact cover problem.
      */
-    pub fn count_all_solutions(& self) -> u64 {
+    pub fn count_all_solutions(&self) -> u64 {
         self.select_required_options();
         let result = self._solve_until(i32::MAX);
         return result.num_solutions;
@@ -190,7 +190,7 @@ impl ExactCoverProblem {
     /**
      * Select an option.
      */
-    fn select_option(& self, option_name: String) -> Vec<String> {
+    fn select_option(&self, option_name: String) -> Vec<String> {
         self.selected_options.borrow_mut().push(option_name.clone());
 
         let mut removed_options: Vec<String> = Vec::new();
@@ -216,7 +216,7 @@ impl ExactCoverProblem {
     /**
      * Unselect an option (essentially perform the inverse of select_option).
      */
-    fn unselect_option(& self, option_name: String, removed_options: Vec<String>) {
+    fn unselect_option(&self, option_name: String, removed_options: Vec<String>) {
         let removed_options_set = removed_options.iter().collect::<HashSet<_>>();
 
         // For each item that this option covers ...
@@ -244,14 +244,14 @@ impl ExactCoverProblem {
     /**
      * Remove an item from the items queue.
      */
-    fn remove_item(& self, item_name: String) {
+    fn remove_item(&self, item_name: String) {
         self.items_queue.borrow_mut().remove(&item_name);
     }
 
     /**
      * Remove an option from the available options of all items that it covers.
      */
-    fn remove_option(& self, option_name: String) {
+    fn remove_option(&self, option_name: String) {
         // For each item that this option covers ...
         self.covers.get(&option_name).unwrap().iter()
             .for_each(|item_name| {
@@ -268,14 +268,14 @@ impl ExactCoverProblem {
     /**
      * Add an item to the items queue.
      */
-    fn return_item(& self, item_name: String) {
+    fn return_item(&self, item_name: String) {
         self.items_queue.borrow_mut().push(item_name.clone(), -(self.available_options.borrow().get(&item_name).unwrap().borrow().len() as i32));
     }
 
     /**
      * Add an option to the available options of all items that it covers.
      */
-    fn return_option(& self, option_name: String) {
+    fn return_option(&self, option_name: String) {
         // For each item that this option covers ...
         self.covers.get(&option_name).unwrap().iter()
             .for_each(|item_name| {
@@ -292,7 +292,7 @@ impl ExactCoverProblem {
     /**
      * Update the priority of an item in the items queue.
      */
-    fn update_priority(& self, item_name: String) {
+    fn update_priority(&self, item_name: String) {
         self.items_queue.borrow_mut().change_priority(&item_name, -(self.available_options.borrow().get(&item_name).unwrap().borrow().len() as i32));
     }
 
@@ -300,7 +300,7 @@ impl ExactCoverProblem {
      * Get the items queue.
      */
     fn get_items_queue(&self) -> Vec<String> {
-        return self.items_queue.borrow().clone().into_sorted_vec()
+        return self.items_queue.borrow().clone().into_sorted_vec();
     }
 
     /**

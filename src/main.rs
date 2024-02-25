@@ -7,7 +7,7 @@ mod lib;
 fn main() {
     let filename = "data/sudoku.txt";
     let result = Board::read_from_file(filename);
-    match(result) {
+    match (result) {
         Ok(board) => {
             println!("Board:");
             println!("{}", board);
@@ -26,7 +26,7 @@ fn main() {
             }
         }
         Err(e) => {
-            // println!("Error reading file: {}", e.);
+            println!("Error reading file: {:?}", e);
         }
     }
 }
