@@ -393,6 +393,7 @@ mod tests {
     #[case("sudoku_hard.txt")]
     #[case("sudoku_hardest.txt")]
     #[case("sudoku_evil.txt")]
+    #[case("sudoku_ai_escargot.txt")]
     fn test_solve_sudoku_different_difficulties(#[case] filename: &str) {
         let board = Board::read_from_file(&format!("data/{}", filename)).unwrap();
 
