@@ -171,8 +171,6 @@ fn block_item_to_name(block: u8, digit: u8) -> String {
     return format!("b{}d{}", block, digit);
 }
 
-const INITIAL_STATE_ITEM_NAME: &str = "init";
-
 fn cell_option_to_name(row: u8, col: u8, digit: u8) -> String {
     return format!("r{}c{}d{}", row, col, digit);
 }
@@ -243,11 +241,6 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-
-    fn enable_logging() {
-        std::env::set_var("RUST_LOG", "info");
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
 
     #[test]
     fn test_read_from_file() {

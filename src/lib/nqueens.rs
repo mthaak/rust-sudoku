@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
-use rstest::rstest;
-
 use crate::lib::exact_cover::{ExactCoverProblem, ExactCoverSolution};
 
 pub(crate) struct NQueensProblem {
@@ -161,11 +159,6 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-
-    fn enable_logging() {
-        std::env::set_var("RUST_LOG", "info");
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
 
     #[test]
     fn test_fmt() {

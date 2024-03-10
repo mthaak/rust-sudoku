@@ -72,11 +72,6 @@ mod tests {
 
     use super::*;
 
-    fn enable_logging() {
-        std::env::set_var("RUST_LOG", "info");
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn test_zero_items() {
         let basic_example = BasicExampleProblem {
